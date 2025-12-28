@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gym Streak — Track Your Workout Consistency</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css">
+    <script src="https://unpkg.com/cal-heatmap/dist/plugins/Legend.min.js"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/plugins/Tooltip.min.js"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/plugins/LegendLite.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/plugins/Tooltip.min.js"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/plugins/CalendarLabel.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.9/dist/basecoat.cdn.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.9/dist/js/all.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <script>
+        (() => {
+            try {
+            const stored = localStorage.getItem('themeMode');
+            if (stored ? stored === 'dark'
+                        : matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            } catch (_) {}
+
+            const apply = dark => {
+            document.documentElement.classList.toggle('dark', dark);
+            try { localStorage.setItem('themeMode', dark ? 'dark' : 'light'); } catch (_) {}
+            };
+
+            document.addEventListener('basecoat:theme', (event) => {
+            const mode = event.detail?.mode;
+            apply(mode === 'dark' ? true
+                    : mode === 'light' ? false
+                    : !document.documentElement.classList.contains('dark'));
+            });
+        })();
+    </script>
+</head>
+<body>
+        
+        <div  class="flex items-center justify-center h-screen p-4">
+            <div class="grid grid-cols-1 grid-rows-2">
+            <div class="card relative">
+                <header>
+                    <div class="flex flex-row">
+                    <div class="basis-full">
+                        <h2>Your Gym Streak</h2>
+                        <p class="text-muted-foreground">Stay consistent. Every visit counts.</p>
+                        <p id="goal-progress" class="text-muted-foreground mt-2 font-medium"></p>
+                    </div>
+                    </div>
+
+                </header>
+                
+                <button 
+                    type="button"
+                    aria-label="Toggle dark mode"
+                    data-tooltip="Switch theme"
+                    data-side="bottom"
+                    onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+                    class="btn-icon-outline size-8 absolute top-4 right-4"
+                    >
+                    <span class="hidden dark:block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg></span>
+                    <span class="block dark:hidden"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg></span>
+                </button>
+                <section class="text-sm">
+                    <p class="text-muted-foreground mb-4">Your workout activity for the year.</p>
+                    <div style="overflow: hidden;">
+                        <div id="cal-heatmap"></div>
+                        <a class="btn-outline mt-4" onclick="goPrev(event)">← Earlier</a>
+                        <a class="btn-outline mt-4" onclick="goNext(event)">Later →</a>
+                    </div>
+                </section>
+                <footer class="flex items-center">
+                    <div class="flex -space-x-2 [&_img]:ring-card [&_img]:ring-2 [&_img]:grayscale [&_img]:size-8 [&_img]:shrink-0 [&_img]:object-cover [&_img]:rounded-full">
+                    </div>
+                </footer>
+            </div>
+            </div>
+        </div>
+
+    <script>
+        (async function () {
+            // Fetch and display goal progress
+            try {
+                const response = await fetch('https://gym-api.senthil.nz/visits/total');
+                const { total_visits, goal } = await response.json();
+                const progressEl = document.getElementById('goal-progress');
+                if (total_visits >= goal) {
+                    progressEl.textContent = `🎉 Goal reached! ${total_visits} of ${goal} days`;
+                } else {
+                    progressEl.textContent = `🏋️ ${total_visits} of ${goal} days - ${goal - total_visits} to go!`;
+                }
+            } catch (err) {
+                console.error('Failed to fetch goal progress:', err);
+            }
+
+            const days = 365;
+            const now = new Date();
+            const start = new Date(2025,9, 1);
+            const data = {
+                source: 'https://gym-api.senthil.nz/entry',
+                type: 'json',
+                x: 'date',
+                y: d => 'visited',
+                groupY: 'count'
+            };
+
+            const scale = {
+                color: {
+                    type: 'threshold',
+                    range: ['#14432a', '#166b34', '#37a446', '#4dd05a'],
+                    domain: [10, 20, 30],
+                },
+            }
+
+            window.cal = new CalHeatmap();
+            await window.cal.paint({
+                itemSelector: "#cal-heatmap",
+                domain: { type: "month", gutter: 12 },
+                subDomain: { type: "day" },
+                date: { 
+                    start: start,
+                    timezone: 'Pacific/Auckland'
+                },
+                range: 12,
+                cell: { size: 14, padding: 4 },
+                data: data,
+                scale: scale,
+                domain: {
+                    type: 'month',
+                    gutter: 4,
+                    label: { text: 'MMM', textAlign: 'start', position: 'top' },
+                },
+                subDomain: { type: 'ghDay', radius: 2, width: 11, height: 11, gutter: 4 },
+            },
+            [
+                [
+                Tooltip,
+                {
+                    text: function (date, value, dayjsDate) {
+                        const formattedDate = dayjsDate.format('dddd, MMMM D, YYYY');
+                        if (dayjsDate.isAfter(dayjs())) {
+                            return '📅 ' + formattedDate + ' — Upcoming';
+                        }
+                        if (value) {
+                            return '💪 Worked out on ' + formattedDate;
+                        }
+                        return '😴 Rest day — ' + formattedDate;
+                    },
+                },
+                ],
+            ],
+            [
+                LegendLite,
+                {
+                    includeBlank: true,
+                    itemSelector: '#ex-ghDay-legend',
+                    radius: 2,
+                    width: 11,
+                    height: 11,
+                    gutter: 4,
+                },
+            ],
+            [
+                CalendarLabel,
+                {
+                    width: 30,
+                    textAlign: 'start',
+                    text: () => dayjs.weekdaysShort().map((d, i) => (i % 2 == 0 ? '' : d)),
+                    padding: [25, 0, 0, 0],
+                },
+            ]
+        );
+        })();
+
+        function goNext(event) {
+            event.preventDefault();
+            window.cal.next();
+        }
+
+        function goPrev(event) {
+            event.preventDefault();
+            window.cal.previous();
+        }
+    </script>
+</body>
+</html>
