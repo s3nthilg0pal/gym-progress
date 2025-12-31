@@ -96,23 +96,9 @@
         (async function () {
             // Fetch and display goal progress
             try {
-                const response = await fetch('https://gym-api.senthil.nz/visits/total');
-                const { total_visits, goal } = await response.json();
+                const response = await fetch('https://gym-api.senthil.nz/visits/progress/message');
+                const { message } = await response.json();
                 const progressEl = document.getElementById('goal-progress');
-                const percent = Math.round((total_visits / goal) * 100);
-                
-                let message;
-                if (percent >= 100) {
-                    message = `🏆 Champion! You crushed it — ${total_visits} of ${goal} days!`;
-                } else if (percent >= 80) {
-                    message = `🔥 Almost there! ${total_visits} of ${goal} days - finish strong!`;
-                } else if (percent >= 50) {
-                    message = `💪 In the zone! ${total_visits} of ${goal} days - keep the momentum!`;
-                } else if (percent >= 20) {
-                    message = `🚀 Building habits! ${total_visits} of ${goal} days - you're on your way!`;
-                } else {
-                    message = `🌱 Every rep counts! ${total_visits} of ${goal} days - let's go!`;
-                }
                 progressEl.textContent = message;
             } catch (err) {
                 console.error('Failed to fetch goal progress:', err);
