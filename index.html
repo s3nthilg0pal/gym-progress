@@ -79,7 +79,6 @@
         <button
           type="button"
           aria-label="Toggle dark mode"
-          data-tooltip="Toggle dark mode"
           data-side="bottom"
           onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
           class="btn-icon-outline size-8 fixed top-4 right-4 z-50"
@@ -546,15 +545,15 @@
                   };
                   const formattedDate = dayjsDate.format("dddd, MMMM D, YYYY");
                   if (dayjsDate.isAfter(dayjs())) {
-                    return "📅 " + formattedDate + " — Upcoming";
+                    return "📅 " + formattedDate + " - Upcoming";
                   }
                   const dateKey = dayjsDate.format("YYYY-MM-DD");
                   const workout = workoutData[dateKey];
                   if (workout) {
                     const emoji = workoutEmojis[workout] || "💪";
-                    return emoji + " " + workout + " day — " + formattedDate;
+                    return emoji + " " + workout + " day - " + formattedDate;
                   }
-                  return "😴 Rest day — " + formattedDate;
+                  return "😴 Rest day - " + formattedDate;
                 },
               },
             ],
