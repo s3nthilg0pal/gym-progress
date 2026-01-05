@@ -199,7 +199,7 @@
         </div>
 
         <div class="card border-0 p-3 mb-2">
-          <div class="flex items-center gap-2 mb-1">
+          <div class="flex items-center gap-2">
             <span class="text-primary">✔️</span>
             <p class="text-sm font-medium leading-none text-foreground">
               This Week:
@@ -364,6 +364,10 @@
               >
                 At this pace, you'll hit 100 by --
               </p>
+              <div id="ai-insights" class="mt-2 text-[11px] text-muted-foreground italic hidden">
+                <span class="text-lg">🤖</span>
+                <span id="ai-insight-text"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -374,12 +378,13 @@
       (async function () {
         const API_BASE = "https://gym-api.senthil.nz";
 
-        const [milestoneRes, statsRes, weekRes, forecastRes] =
+        const [milestoneRes, statsRes, weekRes, forecastRes, aiStatsRes] =
           await Promise.allSettled([
             fetch(`${API_BASE}/visits/milestone`),
             fetch(`${API_BASE}/visits/stats`),
             fetch(`${API_BASE}/visits/weekly`),
             fetch(`${API_BASE}/visits/forecast`),
+            fetch(`${API_BASE}/visits/ai-stats`),
           ]);
 
         if (milestoneRes.status === "fulfilled") {
@@ -463,6 +468,20 @@
               data.future_forecast;
           } catch (err) {
             console.error("Failed to parse forecast:", err);
+          }
+        }
+
+        if (aiStatsRes.status === "fulfilled") {
+          try {
+            const data = await aiStatsRes.value.json();
+            if (data.insights && data.insights.length > 0) {
+              const insightsContainer = document.getElementById("ai-insights");
+              const insightText = document.getElementById("ai-insight-text");
+              insightText.textContent = data.insights[0];
+              insightsContainer.classList.remove("hidden");
+            }
+          } catch (err) {
+            console.error("Failed to parse AI stats:", err);
           }
         }
 
