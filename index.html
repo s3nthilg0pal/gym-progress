@@ -38,6 +38,28 @@
       .progress-ring-circle {
         transition: stroke-dashoffset 0.5s ease-in-out;
       }
+      
+      /* ChatGPT-style loading animation */
+      .ai-loader {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .ai-loader-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: currentColor;
+        opacity: 0.4;
+        animation: ai-pulse 1.4s ease-in-out infinite;
+      }
+      .ai-loader-dot:nth-child(1) { animation-delay: 0s; }
+      .ai-loader-dot:nth-child(2) { animation-delay: 0.2s; }
+      .ai-loader-dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes ai-pulse {
+        0%, 60%, 100% { opacity: 0.4; transform: scale(1); }
+        30% { opacity: 1; transform: scale(1.2); }
+      }
     </style>
 
     <script>
@@ -382,11 +404,16 @@
                   AI Insights
                 </h4>
               </div>
+              <div id="ai-loader" class="ai-loader text-muted-foreground/70">
+                <span class="text-[11px]">Thinking</span>
+                <span class="ai-loader-dot"></span>
+                <span class="ai-loader-dot"></span>
+                <span class="ai-loader-dot"></span>
+              </div>
               <p
                 id="ai-insight-text"
-                class="text-[11px] text-muted-foreground/70"
+                class="text-[11px] text-muted-foreground/70 hidden"
               >
-                Loading insights...
               </p>
             </div>
           </div>
@@ -599,6 +626,8 @@
         try {
           const aiResponse = await fetch(`${API_BASE}/visits/ai-stats`);
           const aiData = await aiResponse.json();
+          document.getElementById("ai-loader").classList.add("hidden");
+          document.getElementById("ai-insight-text").classList.remove("hidden");
           if (aiData.insights && aiData.insights.length > 0) {
             document.getElementById("ai-insight-text").textContent = aiData.insights[0];
           } else {
@@ -606,6 +635,8 @@
           }
         } catch (err) {
           console.error("Failed to fetch AI stats:", err);
+          document.getElementById("ai-loader").classList.add("hidden");
+          document.getElementById("ai-insight-text").classList.remove("hidden");
           document.getElementById("ai-insight-text").textContent = "Failed to load insights";
         }
       })();
