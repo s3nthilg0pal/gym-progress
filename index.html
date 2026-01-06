@@ -626,7 +626,7 @@
         try {
           const aiResponse = await fetch(`${API_BASE}/visits/ai-stats`);
           const aiData = await aiResponse.json();
-          document.getElementById("ai-loader").classList.add("hidden");
+          document.getElementById("ai-loader").style.display = "none";
           document.getElementById("ai-insight-text").classList.remove("hidden");
           if (aiData.insights && aiData.insights.length > 0) {
             document.getElementById("ai-insight-text").textContent = aiData.insights[0];
@@ -635,7 +635,7 @@
           }
         } catch (err) {
           console.error("Failed to fetch AI stats:", err);
-          document.getElementById("ai-loader").classList.add("hidden");
+          document.getElementById("ai-loader").style.display = "none";
           document.getElementById("ai-insight-text").classList.remove("hidden");
           document.getElementById("ai-insight-text").textContent = "Failed to load insights";
         }
