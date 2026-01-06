@@ -490,20 +490,6 @@
           }
         }
 
-        // Fetch AI insights separately
-        try {
-          const aiResponse = await fetch(`${API_BASE}/visits/ai-stats`);
-          const aiData = await aiResponse.json();
-          if (aiData.insights && aiData.insights.length > 0) {
-            document.getElementById("ai-insight-text").textContent = aiData.insights[0];
-          } else {
-            document.getElementById("ai-insight-text").textContent = "No insights available";
-          }
-        } catch (err) {
-          console.error("Failed to fetch AI stats:", err);
-          document.getElementById("ai-insight-text").textContent = "Failed to load insights";
-        }
-
         const workoutColors = {
           Pull: "#f97316", // Orange
           Push: "#3b82f6", // Blue
@@ -608,6 +594,20 @@
         );
 
         document.getElementById("cal-spinner")?.remove();
+
+        // Fetch AI insights last after everything else is loaded
+        try {
+          const aiResponse = await fetch(`${API_BASE}/visits/ai-stats`);
+          const aiData = await aiResponse.json();
+          if (aiData.insights && aiData.insights.length > 0) {
+            document.getElementById("ai-insight-text").textContent = aiData.insights[0];
+          } else {
+            document.getElementById("ai-insight-text").textContent = "No insights available";
+          }
+        } catch (err) {
+          console.error("Failed to fetch AI stats:", err);
+          document.getElementById("ai-insight-text").textContent = "Failed to load insights";
+        }
       })();
 
       function goNext(event) {
