@@ -390,34 +390,6 @@
           </div>
         </div>
 
-        <div
-          class="card border-0 p-3 mt-3 hover:bg-accent transition-colors"
-          id="ai-card"
-        >
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                <span class="text-lg">🤖</span>
-                <h4
-                  class="text-sm font-semibold tracking-tight text-foreground"
-                >
-                  AI Insights
-                </h4>
-              </div>
-              <div id="ai-loader" class="ai-loader text-muted-foreground/70">
-                <span class="text-[11px]">Thinking</span>
-                <span class="ai-loader-dot"></span>
-                <span class="ai-loader-dot"></span>
-                <span class="ai-loader-dot"></span>
-              </div>
-              <p
-                id="ai-insight-text"
-                class="text-[11px] text-muted-foreground/70 hidden"
-              >
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -622,23 +594,6 @@
 
         document.getElementById("cal-spinner")?.remove();
 
-        // Fetch AI insights last after everything else is loaded
-        try {
-          const aiResponse = await fetch(`${API_BASE}/visits/ai-stats`);
-          const aiData = await aiResponse.json();
-          document.getElementById("ai-loader").style.display = "none";
-          document.getElementById("ai-insight-text").classList.remove("hidden");
-          if (aiData.insights && aiData.insights.length > 0) {
-            document.getElementById("ai-insight-text").textContent = aiData.insights[0];
-          } else {
-            document.getElementById("ai-insight-text").textContent = "No insights available";
-          }
-        } catch (err) {
-          console.error("Failed to fetch AI stats:", err);
-          document.getElementById("ai-loader").style.display = "none";
-          document.getElementById("ai-insight-text").classList.remove("hidden");
-          document.getElementById("ai-insight-text").textContent = "Failed to load insights";
-        }
       })();
 
       function goNext(event) {
