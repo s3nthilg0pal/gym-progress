@@ -396,6 +396,8 @@
     <script>
       (async function () {
         const API_BASE = "https://gym-api.senthil.nz";
+        let goalValue = 100;
+        let goalMetDateKey = null;
 
         const [milestoneRes, statsRes, weekRes, forecastRes] =
           await Promise.allSettled([
@@ -418,6 +420,7 @@
             const data = await statsRes.value.json();
             const current = data.currentStreak;
             const goal = data.goal || 100;
+            goalValue = goal;
             const percent = data.progress || 0;
             const currentStreak = data.currentStreak;
             const longestStreak = data.longestStreak;
@@ -516,11 +519,26 @@
           workoutData[dateKey] = entry.workout;
         });
 
+        // Find the date the goal was met (cumulative workouts >= goal)
+        const sortedEntries = [...entries].sort((a, b) =>
+          a.date.localeCompare(b.date)
+        );
+        for (let i = 0; i < sortedEntries.length; i++) {
+          if (i + 1 >= goalValue) {
+            goalMetDateKey = sortedEntries[i].date.split("T")[0];
+            break;
+          }
+        }
+
         const data = {
           source: entries,
           type: "json",
           x: "date",
-          y: (d) => workoutToNumber[d.workout] || 0,
+          y: (d) => {
+            const dateKey = d.date.split("T")[0];
+            if (goalMetDateKey && dateKey === goalMetDateKey) return 5;
+            return workoutToNumber[d.workout] || 0;
+          },
           groupY: "max",
         };
 
@@ -538,8 +556,8 @@
             scale: {
               color: {
                 type: "ordinal",
-                range: ["#27272a", "#f97316", "#3b82f6", "#22c55e", "#a855f7"],
-                domain: [0, 1, 2, 3, 4],
+                range: ["#27272a", "#f97316", "#3b82f6", "#22c55e", "#a855f7", "#fbbf24"],
+                domain: [0, 1, 2, 3, 4, 5],
               },
             },
             domain: {
@@ -574,6 +592,16 @@
                   const workout = workoutData[dateKey];
                   if (workout) {
                     const emoji = workoutEmojis[workout] || "💪";
+                    if (goalMetDateKey && dateKey === goalMetDateKey) {
+                      return (
+                        "🏆 Goal reached! " +
+                        emoji +
+                        " " +
+                        workout +
+                        " day - " +
+                        formattedDate
+                      );
+                    }
                     return emoji + " " + workout + " day - " + formattedDate;
                   }
                   return "😴 Rest day - " + formattedDate;
