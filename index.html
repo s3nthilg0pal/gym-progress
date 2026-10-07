@@ -4,64 +4,73 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Gym Journey — Track Your Workout Progress</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪🏿</text></svg>"
-    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%2322c55e' stroke-width='2' d='M4 8v8M7 5v14M17 5v14M20 8v8M7 12h10'/%3E%3C/svg%3E" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css"
-    />
-    <script src="https://unpkg.com/cal-heatmap/dist/plugins/Legend.min.js"></script>
-    <script src="https://unpkg.com/cal-heatmap/dist/plugins/Tooltip.min.js"></script>
-    <script src="https://unpkg.com/cal-heatmap/dist/plugins/LegendLite.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css" />
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/cal-heatmap/dist/plugins/Tooltip.min.js"></script>
     <script src="https://unpkg.com/cal-heatmap/dist/plugins/CalendarLabel.min.js"></script>
-
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.9/dist/basecoat.cdn.min.css"
-    />
-    <script
-      src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.9/dist/js/all.min.js"
-      defer
-    ></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
     <style>
-      .progress-ring {
-        transform: rotate(-90deg);
-      }
-      .progress-ring-circle {
-        transition: stroke-dashoffset 0.5s ease-in-out;
-      }
-      
-      /* ChatGPT-style loading animation */
-      .ai-loader {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .ai-loader-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background-color: currentColor;
-        opacity: 0.4;
-        animation: ai-pulse 1.4s ease-in-out infinite;
-      }
-      .ai-loader-dot:nth-child(1) { animation-delay: 0s; }
-      .ai-loader-dot:nth-child(2) { animation-delay: 0.2s; }
-      .ai-loader-dot:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes ai-pulse {
-        0%, 60%, 100% { opacity: 0.4; transform: scale(1); }
-        30% { opacity: 1; transform: scale(1.2); }
-      }
+      :root { color-scheme: light; --background: #fff; --foreground: #18181b; --muted: #62626b; --line: #e4e4e7; --accent: #15803d; --hover: #f4f4f5; }
+      :root.dark { color-scheme: dark; --background: #18181b; --foreground: #fafafa; --muted: #a1a1aa; --line: #3f3f46; --accent: #4dd05a; --hover: #27272a; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--background); color: var(--foreground); font: 400 16px/1.5 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+      main { width: min(100% - 40px, 672px); margin: 64px auto; }
+      header, .progress-label, .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      header { margin-bottom: 32px; }
+      h1 { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; }
+      h2 { margin: 0; font-size: 16px; font-weight: 600; }
+      p { margin: 0; }
+      button, summary { -webkit-tap-highlight-color: transparent; }
+      button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--background); color: var(--foreground); cursor: pointer; font: inherit; }
+      button:hover, summary:hover { background: var(--hover); }
+      button:disabled { opacity: .45; cursor: default; }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+      ::selection { background: var(--accent); color: var(--background); }
+      button svg, summary svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+      .sun { display: none; } .dark .sun { display: block; } .dark .moon { display: none; }
+      .muted { color: var(--muted); }
+      .goal-description { margin-bottom: 12px; color: var(--muted); }
+      #goal-text { color: var(--foreground); }
+      .progress-label { align-items: baseline; }
+      #progress-count { font-size: 20px; font-weight: 600; }
+      #progress-percent { color: var(--muted); font-size: 14px; }
+      progress { display: block; width: 100%; height: 6px; margin: 12px 0 24px; border: 0; border-radius: 3px; overflow: hidden; background: var(--line); accent-color: var(--accent); }
+      progress::-moz-progress-bar { background: var(--accent); }
+      progress::-webkit-progress-bar { background: var(--line); }
+      progress::-webkit-progress-value { background: var(--accent); }
+      .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .quick-stats p { color: var(--muted); font-size: 14px; }
+      .quick-stats strong { display: block; margin-top: 4px; color: var(--foreground); font-size: 16px; font-weight: 600; }
+      #week-comparison { margin-top: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+      .history { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+      .calendar-nav { display: flex; gap: 8px; }
+      .calendar-scroll { margin-top: 20px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line) var(--background); }
+      #cal-heatmap-container { min-height: 160px; }
+      #cal-heatmap-container[data-state] { min-height: 0; }
+      #cal-spinner { color: var(--muted); font-size: 14px; padding: 32px 0; }
+      .ch-domain-text, .ch-plugin-calendar-label-text { fill: var(--muted) !important; font-size: 12px; }
+      .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; color: var(--muted); font-size: 12px; }
+      .legend span { display: inline-flex; align-items: center; gap: 6px; }
+      .swatch { width: 10px; height: 10px; border-radius: 2px; }
+      .pull { background: #f97316; } .push { background: #3b82f6; } .legs { background: #22c55e; } .cardio { background: #a855f7; }
+      details { margin-top: 28px; border-top: 1px solid var(--line); }
+      summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 52px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 600; }
+      summary::-webkit-details-marker { display: none; }
+      details[open] summary svg { transform: rotate(180deg); }
+      .detail-content { padding: 8px 0 16px; }
+      .detail-content > p, .detail-content > section { margin-bottom: 20px; }
+      .detail-content p { font-size: 14px; overflow-wrap: anywhere; }
+      .detail-content h2 { margin-bottom: 6px; font-size: 14px; }
+      #goal-breakdown, #avg-workouts, #projection { color: var(--muted); }
+      #projection { margin-top: 4px; }
+      #sync-status { margin-top: 16px; font-size: 14px; color: var(--muted); }
+      #sync-status:empty { display: none; }
+      #retry { margin-top: 8px; font-size: 14px; }
+      [hidden] { display: none !important; }
+      @media (max-width: 480px) { main { margin: 28px auto; } h1 { font-size: 24px; } header { margin-bottom: 28px; } }
     </style>
-
     <script>
       (() => {
         try {
@@ -95,326 +104,89 @@
       })();
     </script>
   </head>
-  <body class="overflow-x-hidden bg-background text-foreground">
-    <div class="flex items-center justify-center min-h-svh p-4">
-      <div class="w-full max-w-2xl relative">
-        <button
-          type="button"
-          aria-label="Toggle dark mode"
-          data-side="bottom"
-          onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
-          class="btn-icon-outline size-8 fixed top-4 right-4 z-50"
-        >
-          <span class="hidden dark:block"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2" />
-              <path d="M12 20v2" />
-              <path d="m4.93 4.93 1.41 1.41" />
-              <path d="m17.66 17.66 1.41 1.41" />
-              <path d="M2 12h2" />
-              <path d="M20 12h2" />
-              <path d="m6.34 17.66-1.41 1.41" />
-              <path d="m19.07 4.93-1.41 1.41" /></svg
-          ></span>
-          <span class="block dark:hidden"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg
-          ></span>
+  <body>
+    <main>
+      <header>
+        <h1>Your Gym Journey</h1>
+        <button type="button" aria-label="Toggle dark mode" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))">
+          <svg class="moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+          <svg class="sun" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5" /></svg>
         </button>
-
-        <header class="mb-4">
-          <h1
-            class="scroll-m-20 text-3xl font-extrabold tracking-tight text-foreground lg:text-4xl"
-          >
-            Your Gym Journey
-          </h1>
-          <p class="text-lg text-muted-foreground">
-            Goal:
-            <span id="goal-text" class="text-[#4dd05a] font-semibold"
-              >-- workouts</span
-            >
-            in 2026
-          </p>
-        </header>
-
-        <div
-          class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-sm font-medium leading-none"
-        >
-          <div class="flex items-center gap-2">
-            <svg
-              class="progress-ring"
-              width="20"
-              height="20"
-              viewBox="0 0 36 36"
-            >
-              <circle
-                cx="18"
-                cy="18"
-                r="16"
-                fill="none"
-                stroke="#3f3f46"
-                stroke-width="3"
-              />
-              <circle
-                id="progress-ring-circle"
-                class="progress-ring-circle"
-                cx="18"
-                cy="18"
-                r="16"
-                fill="none"
-                stroke="#22c55e"
-                stroke-width="3"
-                stroke-linecap="round"
-              />
-            </svg>
-            <span class="text-muted-foreground"
-              >Active goal:
-              <span id="progress-count" class="text-foreground font-semibold"
-                >-- / 100</span
-              >
-              <span id="progress-percent" class="text-muted-foreground/70"
-                >(---%)</span
-              ></span
-            >
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-muted-foreground">Combined goals:
-              <span id="combined-progress-count" class="text-foreground font-semibold">-- / --</span>
-              <span id="combined-progress-percent" class="text-muted-foreground/70">(---%)</span>
-            </span>
-          </div>
-          <div class="w-full pl-7 text-sm text-muted-foreground">
-            Individual goals: <span id="goal-breakdown">Loading...</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span>🔥</span>
-            <span class="text-muted-foreground"
-              >Current streak:
-              <span id="current-streak" class="text-foreground font-semibold"
-                >-- days</span
-              ></span
-            >
-          </div>
+      </header>
+      <section aria-label="Workout progress">
+        <p class="goal-description">Goal: <span id="goal-text">— workouts</span> in 2026</p>
+        <div class="progress-label"><span id="progress-count">Loading progress…</span><span id="progress-percent"></span></div>
+        <progress id="goal-progress" max="100" value="0" aria-label="Active workout goal progress"></progress>
+        <div class="quick-stats">
+          <p>This week<strong><span id="week-progress">— / —</span> workouts</strong></p>
+          <p>Current streak<strong id="current-streak">— days</strong></p>
         </div>
-        <div
-          class="flex items-center gap-2 mb-4 text-sm font-medium leading-none"
-        >
-          <span>🏃‍♂️‍➡️</span>
-          <span class="text-muted-foreground"
-            >Longest streak:
-            <span id="longest-streak" class="text-foreground font-semibold"
-              >-- days</span
-            ></span
-          >
+        <p id="week-comparison"></p>
+      </section>
+      <section class="history" aria-labelledby="history-title">
+        <div class="history-heading">
+          <h2 id="history-title">Workout history</h2>
+          <nav class="calendar-nav" aria-label="Workout calendar">
+            <button id="calendar-prev" onclick="goPrev(event)" type="button" aria-label="Previous months" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button>
+            <button id="calendar-next" onclick="goNext(event)" type="button" aria-label="Next months" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button>
+          </nav>
         </div>
-
-        <div class="card border-0 p-3 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-primary">✔️</span>
-            <p class="text-sm font-medium leading-none text-foreground">
-              This Week:
-              <span id="week-progress" class="font-semibold">-- / --</span>
-              workouts complete
-            </p>
-          </div>
-          <div
-            id="week-comparison"
-            class="flex items-center gap-2 text-sm text-muted-foreground"
-          >
-            <span>🔥</span>
-            <span>Loading...</span>
-          </div>
+        <div class="calendar-scroll" tabindex="0" role="region" aria-label="Workout calendar; select a day to see its workout">
+          <div id="cal-heatmap-container"><p id="cal-spinner" role="status">Loading workout history…</p><div id="cal-heatmap"></div></div>
         </div>
-
-        <div class="card border-0 p-3 mb-2">
-          <div class="flex items-center gap-2">
-            <span>🏅</span>
-            <p class="text-sm font-medium leading-none text-foreground">
-              Next milestone:
-              <span id="next-milestone" class="text-primary font-semibold"
-                >--</span
-              >
-              workouts — only
-              <span id="milestone-remaining" class="text-primary font-semibold"
-                >--</span
-              >
-              to go!
-            </p>
-          </div>
+        <div class="legend" aria-label="Workout types">
+          <span><i class="swatch pull" aria-hidden="true"></i>Pull</span>
+          <span><i class="swatch push" aria-hidden="true"></i>Push</span>
+          <span><i class="swatch legs" aria-hidden="true"></i>Legs</span>
+          <span><i class="swatch cardio" aria-hidden="true"></i>Cardio</span>
         </div>
-
-        <div class="mt-4 flex gap-4">
-          <div class="overflow-x-auto flex-1">
-            <div id="cal-heatmap-container" class="relative min-h-[180px]">
-              <div
-                id="cal-spinner"
-                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-              >
-                <span class="badge badge-secondary flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    role="status"
-                    aria-label="Loading"
-                    class="animate-spin"
-                  >
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                  </svg>
-                  Syncing
-                </span>
-              </div>
-              <div id="cal-heatmap"></div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 text-xs text-muted-foreground pt-6">
-            <div class="flex items-center gap-1.5">
-              <span
-                class="w-3 h-3 rounded-sm"
-                style="background-color: #f97316"
-              ></span>
-              <span>🏋️ Pull</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span
-                class="w-3 h-3 rounded-sm"
-                style="background-color: #3b82f6"
-              ></span>
-              <span>💪 Push</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span
-                class="w-3 h-3 rounded-sm"
-                style="background-color: #22c55e"
-              ></span>
-              <span>🦵 Legs</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span
-                class="w-3 h-3 rounded-sm"
-                style="background-color: #a855f7"
-              ></span>
-              <span>🏃 Cardio</span>
-            </div>
-          </div>
+      </section>
+      <details>
+        <summary>More progress<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg></summary>
+        <div class="detail-content">
+          <section aria-labelledby="goals-title">
+            <h2 id="goals-title">Combined goals</h2>
+            <p><span id="combined-progress-count">— / —</span> <span id="combined-progress-percent"></span></p>
+            <p id="goal-breakdown">Loading goals…</p>
+          </section>
+          <p>Longest streak: <strong id="longest-streak">— days</strong></p>
+          <p>Next milestone: <strong id="next-milestone">—</strong> workouts · <strong id="milestone-remaining">—</strong> to go</p>
+          <section aria-labelledby="stats-title">
+            <h2 id="stats-title">Stats</h2>
+            <p id="avg-workouts">Loading workout average…</p>
+            <p id="projection"></p>
+          </section>
         </div>
-
-        <div role="group" class="button-group hidden md:flex">
-          <button
-            onclick="goPrev(event)"
-            type="button"
-            class="btn-sm-icon-outline"
-            aria-label="Previous page"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-          <button
-            onclick="goNext(event)"
-            type="button"
-            class="btn-sm-icon-outline"
-            aria-label="Next page"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
-        </div>
-
-        <div
-          class="card border-0 p-3 mt-3 cursor-pointer hover:bg-accent transition-colors"
-          id="stats-card"
-        >
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                <span class="text-lg">📈</span>
-                <h4
-                  class="text-sm font-semibold tracking-tight text-foreground"
-                >
-                  Stats
-                </h4>
-                <span class="text-muted-foreground hidden sm:inline">•</span>
-                <span
-                  id="avg-workouts"
-                  class="text-[11px] text-muted-foreground w-full sm:w-auto"
-                  >You average -- workouts/week</span
-                >
-              </div>
-              <p
-                id="projection"
-                class="text-[11px] text-muted-foreground/70 truncate"
-              >
-                At this pace, you'll hit 100 by --
-              </p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+      </details>
+      <p id="sync-status" role="status">Syncing progress…</p>
+      <button id="retry" type="button" onclick="location.reload()" hidden>Retry</button>
+    </main>
 
     <script>
       (async function () {
         const API_BASE = "https://gym-api.senthil.nz";
+        const apiFetch = async (path) => {
+          const response = await fetch(`${API_BASE}${path}`, { signal: AbortSignal.timeout(12000) });
+          if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+          return response;
+        };
+        let failed = false;
+        const markFailure = () => { failed = true; };
         let goalValue = 100;
         let goalMetDateKey = null;
-        const [milestoneRes, statsRes, weekRes, forecastRes, goalsRes] =
+        const [milestoneRes, statsRes, weekRes, forecastRes, goalsRes, entriesRes] =
           await Promise.allSettled([
-            fetch(`${API_BASE}/visits/milestone`),
-            fetch(`${API_BASE}/visits/stats`),
-            fetch(`${API_BASE}/visits/weekly`),
-            fetch(`${API_BASE}/visits/forecast`),
-            fetch(`${API_BASE}/visits/goals`),
+            apiFetch("/visits/milestone"),
+            apiFetch("/visits/stats"),
+            apiFetch("/visits/weekly"),
+            apiFetch("/visits/forecast"),
+            apiFetch("/visits/goals"),
+            apiFetch("/entry"),
           ]);
+
+        if ([milestoneRes, statsRes, weekRes, forecastRes, goalsRes, entriesRes].some(result => result.status === "rejected")) markFailure();
+        if (statsRes.status === "rejected") document.getElementById("progress-count").textContent = "Progress unavailable";
+        if (forecastRes.status === "rejected") document.getElementById("avg-workouts").textContent = "Workout average unavailable";
 
         if (goalsRes.status === "fulfilled") {
           try {
@@ -428,6 +200,7 @@
             document.getElementById("combined-progress-percent").textContent =
               `(${combined.percent}%)`;
           } catch (err) {
+            markFailure();
             console.error("Failed to parse combined goals:", err);
             document.getElementById("goal-breakdown").textContent = "Unavailable";
             document.getElementById("combined-progress-count").textContent = "-- / --";
@@ -438,17 +211,18 @@
         }
 
         if (milestoneRes.status === "fulfilled") {
-          const data = await milestoneRes.value.json();
-          document.getElementById("next-milestone").textContent =
-            data.next_milestone;
-          document.getElementById("milestone-remaining").textContent =
-            data.workouts_to_go;
+          try {
+            const data = await milestoneRes.value.json();
+            document.getElementById("next-milestone").textContent =
+              data.next_milestone;
+            document.getElementById("milestone-remaining").textContent =
+              data.workouts_to_go;
+          } catch (err) { markFailure(); console.error("Failed to parse milestone:", err); }
         }
 
         if (statsRes.status === "fulfilled") {
           try {
             const data = await statsRes.value.json();
-            const current = data.currentStreak;
             const goal = data.goal || 100;
             goalValue = goal;
             const currentStreak = data.currentStreak;
@@ -461,10 +235,7 @@
             const percent = data.progress || 0;
             document.getElementById("progress-count").textContent = `${totalWorkouts} / ${goal}`;
             document.getElementById("progress-percent").textContent = `(${percent}%)`;
-            const circle = document.getElementById("progress-ring-circle");
-            const circumference = 2 * Math.PI * 16;
-            circle.setAttribute("stroke-dasharray", circumference);
-            circle.setAttribute("stroke-dashoffset", circumference - (Math.min(percent, 100) / 100) * circumference);
+            document.getElementById("goal-progress").value = Math.min(Math.max(percent, 0), 100);
 
             document.getElementById("current-streak").textContent =
               currentStreak;
@@ -481,9 +252,10 @@
             if (data.projectedDate) {
               document.getElementById(
                 "projection"
-              ).textContent = `At this pace, you'll hit 100 by ${data.projectedDate}`;
+              ).textContent = `At this pace, you'll hit ${goal} by ${data.projectedDate}`;
             }
           } catch (err) {
+            markFailure();
             console.error("Failed to parse progress:", err);
           }
         }
@@ -496,8 +268,9 @@
             } / ${data.weekly_goal || 4}`;
 
             const comparison = document.getElementById("week-comparison");
-            comparison.innerHTML = data.progress_message;
+            comparison.textContent = data.progress_message || "";
           } catch (err) {
+            markFailure();
             console.error("Failed to parse week:", err);
           }
         }
@@ -510,16 +283,10 @@
             document.getElementById("projection").textContent =
               data.future_forecast;
           } catch (err) {
+            markFailure();
             console.error("Failed to parse forecast:", err);
           }
         }
-
-        const workoutColors = {
-          Pull: "#f97316", // Orange
-          Push: "#3b82f6", // Blue
-          Legs: "#22c55e", // Green
-          Cardio: "#a855f7", // Purple
-        };
 
         const workoutToNumber = {
           Pull: 1,
@@ -528,121 +295,129 @@
           Cardio: 4,
         };
 
-        let workoutData = {};
+        const workoutData = {};
 
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const entryResponse = await fetch(`${API_BASE}/entry`);
-        const entries = await entryResponse.json();
+        try {
+          if (entriesRes.status !== "fulfilled") throw new Error("Workout history unavailable");
+          const entries = await entriesRes.value.json();
+          if (!Array.isArray(entries)) throw new Error("Invalid workout history");
 
-        entries.forEach((entry) => {
-          const dateKey = entry.date.split("T")[0];
-          workoutData[dateKey] = entry.workout;
-        });
+          entries.forEach((entry) => {
+            const dateKey = entry.date.split("T")[0];
+            workoutData[dateKey] = entry.workout;
+          });
 
-        // Find the date the goal was met (cumulative workouts >= goal)
-        const sortedEntries = [...entries].sort((a, b) =>
-          a.date.localeCompare(b.date)
-        );
-        for (let i = 0; i < sortedEntries.length; i++) {
-          if (i + 1 >= goalValue) {
-            goalMetDateKey = sortedEntries[i].date.split("T")[0];
-            break;
+          // Find the date the goal was met (cumulative workouts >= goal)
+          const sortedEntries = [...entries].sort((a, b) =>
+            a.date.localeCompare(b.date)
+          );
+          for (let i = 0; i < sortedEntries.length; i++) {
+            if (i + 1 >= goalValue) {
+              goalMetDateKey = sortedEntries[i].date.split("T")[0];
+              break;
+            }
           }
-        }
 
-        const data = {
-          source: entries,
-          type: "json",
-          x: "date",
-          y: (d) => {
-            const dateKey = d.date.split("T")[0];
-            if (goalMetDateKey && dateKey === goalMetDateKey) return 5;
-            return workoutToNumber[d.workout] || 0;
-          },
-          groupY: "max",
-        };
-
-        window.cal = new CalHeatmap();
-        await window.cal.paint(
-          {
-            itemSelector: "#cal-heatmap",
-            theme: "dark",
-            date: {
-              start: start,
-              timezone: "Pacific/Auckland",
+          const data = {
+            source: entries,
+            type: "json",
+            x: "date",
+            y: (d) => {
+              const dateKey = d.date.split("T")[0];
+              if (goalMetDateKey && dateKey === goalMetDateKey) return 5;
+              return workoutToNumber[d.workout] || 0;
             },
-            range: 6,
-            data: data,
-            scale: {
-              color: {
-                type: "ordinal",
-                range: ["#27272a", "#f97316", "#3b82f6", "#22c55e", "#a855f7", "#fbbf24"],
-                domain: [0, 1, 2, 3, 4, 5],
+            groupY: "max",
+          };
+
+          window.cal = new CalHeatmap();
+          await window.cal.paint(
+            {
+              itemSelector: "#cal-heatmap",
+              theme: "dark",
+              date: {
+                start: start,
+                timezone: "Pacific/Auckland",
               },
-            },
-            domain: {
-              type: "month",
-              gutter: 4,
-              label: { text: "MMM", textAlign: "start", position: "top" },
-            },
-            subDomain: {
-              type: "ghDay",
-              radius: 2,
-              width: 14,
-              height: 14,
-              gutter: 4,
-            },
-          },
-          [
-            [
-              Tooltip,
-              {
-                text: function (date, value, dayjsDate) {
-                  const workoutEmojis = {
-                    Pull: "🏋️",
-                    Push: "💪",
-                    Legs: "🦵",
-                    Cardio: "🏃",
-                  };
-                  const formattedDate = dayjsDate.format("dddd, MMMM D, YYYY");
-                  if (dayjsDate.isAfter(dayjs())) {
-                    return "📅 " + formattedDate + " - Upcoming";
-                  }
-                  const dateKey = dayjsDate.format("YYYY-MM-DD");
-                  const workout = workoutData[dateKey];
-                  if (workout) {
-                    const emoji = workoutEmojis[workout] || "💪";
-                    if (goalMetDateKey && dateKey === goalMetDateKey) {
-                      return (
-                        "🏆 Goal reached! " +
-                        emoji +
-                        " " +
-                        workout +
-                        " day - " +
-                        formattedDate
-                      );
-                    }
-                    return emoji + " " + workout + " day - " + formattedDate;
-                  }
-                  return "😴 Rest day - " + formattedDate;
+              range: matchMedia("(max-width: 480px)").matches ? 2 : 4,
+              data: data,
+              scale: {
+                color: {
+                  type: "ordinal",
+                  range: ["#27272a", "#f97316", "#3b82f6", "#22c55e", "#a855f7", "#fbbf24"],
+                  domain: [0, 1, 2, 3, 4, 5],
                 },
               },
-            ],
-            [
-              CalendarLabel,
-              {
-                width: 25,
-                textAlign: "start",
-                text: () => ["", "Mon", "", "Wed", "", "Fri", ""],
-                padding: [25, 0, 0, 0],
+              domain: {
+                type: "month",
+                gutter: 4,
+                label: { text: "MMM", textAlign: "start", position: "top" },
               },
-            ],
-          ]
-        );
+              subDomain: {
+                type: "ghDay",
+                radius: 2,
+                width: 14,
+                height: 14,
+                gutter: 4,
+              },
+            },
+            [
+              [
+                Tooltip,
+                {
+                  text: function (date, value, dayjsDate) {
+                    const formattedDate = dayjsDate.format("dddd, MMMM D, YYYY");
+                    if (date > Date.now()) {
+                      return formattedDate + " - Upcoming";
+                    }
+                    const dateKey = dayjsDate.format("YYYY-MM-DD");
+                    const workout = workoutData[dateKey];
+                    if (workout) {
+                      if (goalMetDateKey && dateKey === goalMetDateKey) {
+                        return (
+                          "Goal reached! " +
+                          workout +
+                          " day - " +
+                          formattedDate
+                        );
+                      }
+                      return workout + " day - " + formattedDate;
+                    }
+                    return "Rest day - " + formattedDate;
+                  },
+                },
+              ],
+              [
+                CalendarLabel,
+                {
+                  width: 25,
+                  textAlign: "start",
+                  text: () => ["", "Mon", "", "Wed", "", "Fri", ""],
+                  padding: [25, 0, 0, 0],
+                },
+              ],
+            ]
+          );
 
-        document.getElementById("cal-spinner")?.remove();
+          if (entries.length === 0) {
+            document.getElementById("cal-spinner").textContent = "No workouts recorded yet.";
+            document.getElementById("cal-heatmap-container").dataset.state = "empty";
+          } else {
+            document.getElementById("cal-spinner")?.remove();
+          }
+          document.getElementById("calendar-prev").disabled = false;
+          document.getElementById("calendar-next").disabled = false;
+        } catch (err) {
+          markFailure();
+          document.getElementById("cal-heatmap-container").dataset.state = "error";
+          document.getElementById("cal-spinner").textContent = "Workout history couldn’t load. Try again.";
+          console.error("Failed to load workout history:", err);
+        }
+        document.getElementById("sync-status").textContent = failed ? "Some progress couldn’t load. Try again." : "";
+        document.getElementById("retry").hidden = !failed;
 
       })();
 
