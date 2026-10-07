@@ -343,7 +343,7 @@
                 start: start,
                 timezone: "Pacific/Auckland",
               },
-              range: matchMedia("(max-width: 480px)").matches ? 2 : 4,
+              range: matchMedia("(max-width: 480px)").matches ? 3 : 4,
               data: data,
               scale: {
                 color: {
@@ -354,11 +354,12 @@
               },
               domain: {
                 type: "month",
+                dynamicDimension: false,
                 gutter: 4,
                 label: { text: "MMM", textAlign: "start", position: "top" },
               },
               subDomain: {
-                type: "ghDay",
+                type: "day",
                 radius: 2,
                 width: 14,
                 height: 14,
