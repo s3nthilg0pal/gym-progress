@@ -189,7 +189,7 @@
               />
             </svg>
             <span class="text-muted-foreground"
-              >Progress:
+              >Year progress:
               <span id="progress-count" class="text-foreground font-semibold"
                 >-- / 100</span
               >
@@ -197,6 +197,12 @@
                 >(---%)</span
               ></span
             >
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-muted-foreground">Combined goals:
+              <span id="combined-progress-count" class="text-foreground font-semibold">-- / --</span>
+              <span id="combined-progress-percent" class="text-muted-foreground/70">(---%)</span>
+            </span>
           </div>
           <div class="flex items-center gap-2">
             <span>🔥</span>
@@ -398,6 +404,18 @@
         const API_BASE = "https://gym-api.senthil.nz";
         let goalValue = 100;
         let goalMetDateKey = null;
+        let yearlyWorkouts = 0;
+        let yearlyGoal = 100;
+        let weeklyWorkouts = 0;
+        let weeklyGoal = 4;
+
+        const updateCombinedProgress = () => {
+          const completed = yearlyWorkouts + weeklyWorkouts;
+          const target = yearlyGoal + weeklyGoal;
+          const percent = target ? Math.round((completed / target) * 100) : 0;
+          document.getElementById("combined-progress-count").textContent = `${completed} / ${target}`;
+          document.getElementById("combined-progress-percent").textContent = `(${percent}%)`;
+        };
 
         const [milestoneRes, statsRes, weekRes, forecastRes] =
           await Promise.allSettled([
@@ -421,7 +439,6 @@
             const current = data.currentStreak;
             const goal = data.goal || 100;
             goalValue = goal;
-            const percent = data.progress || 0;
             const currentStreak = data.currentStreak;
             const longestStreak = data.longestStreak;
             const totalWorkouts = data.total || 0;
@@ -429,25 +446,21 @@
             document.getElementById(
               "goal-text"
             ).textContent = `${goal} workouts`;
-            document.getElementById(
-              "progress-count"
-            ).textContent = `${totalWorkouts} / ${goal}`;
-            document.getElementById(
-              "progress-percent"
-            ).textContent = `(${percent}%)`;
+            const percent = data.progress || 0;
+            document.getElementById("progress-count").textContent = `${totalWorkouts} / ${goal}`;
+            document.getElementById("progress-percent").textContent = `(${percent}%)`;
+            const circle = document.getElementById("progress-ring-circle");
+            const circumference = 2 * Math.PI * 16;
+            circle.setAttribute("stroke-dasharray", circumference);
+            circle.setAttribute("stroke-dashoffset", circumference - (Math.min(percent, 100) / 100) * circumference);
+            yearlyWorkouts = totalWorkouts;
+            yearlyGoal = goal;
+            updateCombinedProgress();
 
             document.getElementById("current-streak").textContent =
               currentStreak;
             document.getElementById("longest-streak").textContent =
               longestStreak;
-
-            const circle = document.getElementById("progress-ring-circle");
-            const radius = 16;
-            const circumference = 2 * Math.PI * radius; // ~100.53
-
-            circle.setAttribute("stroke-dasharray", circumference);
-            const offset = circumference - (percent / 100) * circumference;
-            circle.setAttribute("stroke-dashoffset", offset);
 
             const avgPerWeek = data.avgPerWeek || 0;
             document.getElementById(
@@ -469,6 +482,9 @@
         if (weekRes.status === "fulfilled") {
           try {
             const data = await weekRes.value.json();
+            weeklyWorkouts = data.workouts_completed || 0;
+            weeklyGoal = data.weekly_goal || 4;
+            updateCombinedProgress();
             document.getElementById("week-progress").textContent = `${
               data.workouts_completed || 0
             } / ${data.weekly_goal || 4}`;
