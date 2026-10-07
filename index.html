@@ -49,8 +49,9 @@
       .calendar-scroll { margin-top: 20px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line) var(--background); }
       #cal-heatmap-container { min-height: 160px; }
       #cal-heatmap-container[data-state] { min-height: 0; }
+      #cal-heatmap > .ch-container { display: block; width: 100%; height: auto; }
       #cal-spinner { color: var(--muted); font-size: 14px; padding: 32px 0; }
-      .ch-domain-text, .ch-plugin-calendar-label-text { fill: var(--muted) !important; font-size: 12px; }
+      #cal-heatmap text { fill: var(--muted) !important; font-size: var(--calendar-label-size, 12px) !important; }
       .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; color: var(--muted); font-size: 12px; }
       .legend span { display: inline-flex; align-items: center; gap: 6px; }
       .swatch { width: 10px; height: 10px; border-radius: 2px; }
@@ -401,6 +402,26 @@
               ],
             ]
           );
+
+          // Scale the calendar uniformly while keeping labels at 12 screen pixels.
+          const calendar = document.getElementById("cal-heatmap");
+          const fitCalendar = () => {
+            const svg = calendar.querySelector(":scope > .ch-container");
+            if (!svg) return;
+            const width = Number(svg.getAttribute("width"));
+            const height = Number(svg.getAttribute("height"));
+            if (!width || !height || !calendar.clientWidth) return;
+            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+            svg.style.setProperty("--calendar-label-size", `${12 * width / calendar.clientWidth}px`);
+          };
+          fitCalendar();
+          new ResizeObserver(fitCalendar).observe(calendar);
+          new MutationObserver(fitCalendar).observe(calendar, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["width", "height"],
+          });
 
           if (entries.length === 0) {
             document.getElementById("cal-spinner").textContent = "No workouts recorded yet.";
